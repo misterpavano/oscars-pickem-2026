@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏆 Oscars Pick'em 2026 — Wally vs. Amy</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0a0a;
+    color: #f0e6c8;
+    font-family: 'Georgia', serif;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #1a1000 0%, #0a0a0a 50%, #1a1000 100%);
+    border-bottom: 2px solid #c9a84c;
+    text-align: center;
+    padding: 24px 16px 20px;
+  }
+
+  header h1 {
+    font-size: clamp(1.4rem, 5vw, 2.4rem);
+    color: #c9a84c;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  header p {
+    color: #8a7a50;
+    font-size: 0.85rem;
+    margin-top: 6px;
+    letter-spacing: 0.08em;
+  }
+
+  .scoreboard {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 14px 20px;
+    background: #111;
+    border-bottom: 1px solid #2a2000;
+  }
+
+  .score-item {
+    text-align: center;
+  }
+
+  .score-item .name {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #8a7a50;
+  }
+
+  .score-item .count {
+    font-size: 1.4rem;
+    color: #c9a84c;
+    font-weight: bold;
+  }
+
+  .score-item.locked .name::after {
+    content: ' ✓';
+    color: #4caf50;
+  }
+
+  .lock-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 14px 16px;
+    background: #0d0d0d;
+    border-bottom: 1px solid #1a1400;
+    flex-wrap: wrap;
+  }
+
+  .lock-btn {
+    padding: 10px 28px;
+    border: 2px solid #c9a84c;
+    background: transparent;
+    color: #c9a84c;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+    font-family: Georgia, serif;
+  }
+
+  .lock-btn:hover:not(:disabled) {
+    background: #c9a84c;
+    color: #0a0a0a;
+  }
+
+  .lock-btn:disabled {
+    border-color: #4caf50;
+    color: #4caf50;
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+
+  .lock-btn:disabled::before {
+    content: '🔒 ';
+  }
+
+  .categories-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  .category {
+    margin-bottom: 28px;
+    border: 1px solid #1e1600;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .category-header {
+    background: linear-gradient(90deg, #1a1200, #0f0c00, #1a1200);
+    border-bottom: 1px solid #2a2000;
+    padding: 10px 16px;
+    text-align: center;
+  }
+
+  .category-header h2 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #c9a84c;
+  }
+
+  .picks-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0;
+  }
+
+  .player-column {
+    padding: 12px 10px;
+  }
+
+  .player-column.wally-col {
+    border-right: 1px solid #1e1600;
+  }
+
+  .player-column.amy-col {
+    border-left: 1px solid #1e1600;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    font-size: 0.7rem;
+    color: #3a3020;
+    writing-mode: vertical-rl;
+    letter-spacing: 0.1em;
+    min-width: 28px;
+  }
+
+  .nominee-btn {
+    display: block;
+    width: 100%;
+    padding: 7px 10px;
+    margin-bottom: 5px;
+    background: #111;
+    border: 1px solid #222;
+    color: #c0ad80;
+    font-size: 0.78rem;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s;
+    font-family: Georgia, serif;
+    line-height: 1.3;
+  }
+
+  .nominee-btn:last-child {
+    margin-bottom: 0;
+  }
+
+  .nominee-btn:hover:not(.locked) {
+    background: #1e1600;
+    border-color: #6a5a30;
+    color: #f0e6c8;
+  }
+
+  .nominee-btn.selected {
+    background: #2a1e00;
+    border-color: #c9a84c;
+    color: #c9a84c;
+    position: relative;
+  }
+
+  .nominee-btn.selected::before {
+    content: '★ ';
+  }
+
+  .nominee-btn.locked {
+    cursor: not-allowed;
+  }
+
+  .nominee-btn.locked.selected {
+    background: #1a1600;
+    border-color: #8a7030;
+    color: #c9a84c;
+    opacity: 0.9;
+  }
+
+  .player-label {
+    text-align: center;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #5a4a20;
+    margin-bottom: 8px;
+  }
+
+  .player-label.is-locked {
+    color: #4caf50;
+  }
+
+  .player-label.is-locked::before {
+    content: '🔒 ';
+  }
+
+  .both-locked-banner {
+    display: none;
+    background: linear-gradient(135deg, #0f2000, #1a3000, #0f2000);
+    border: 1px solid #4caf50;
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 24px;
+    font-size: 0.95rem;
+    color: #81c784;
+    letter-spacing: 0.05em;
+  }
+
+  .both-locked-banner.visible {
+    display: block;
+  }
+
+  .column-headers {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    max-width: 1200px;
+    margin: 0 auto 4px;
+    padding: 0 16px;
+    gap: 0;
+  }
+
+  .col-head {
+    text-align: center;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #8a7a50;
+    padding: 6px;
+  }
+
+  .col-head .trophy { color: #c9a84c; }
+
+  .col-spacer { min-width: 28px; }
+
+  @media (max-width: 600px) {
+    .nominee-btn { font-size: 0.72rem; padding: 6px 8px; }
+    .category-header h2 { font-size: 0.72rem; }
+    header h1 { font-size: 1.3rem; }
+    .col-head { font-size: 0.65rem; }
+    .divider { font-size: 0.55rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏆 Oscars Pick'em 2026</h1>
+  <p>98th Academy Awards &nbsp;·&nbsp; March 15, 2026 &nbsp;·&nbsp; Wally vs. Amy</p>
+</header>
+
+<div class="scoreboard">
+  <div class="score-item" id="wally-score-box">
+    <div class="name">Wally</div>
+    <div class="count" id="wally-pick-count">0 / 16</div>
+  </div>
+  <div class="score-item" id="amy-score-box">
+    <div class="name">Amy</div>
+    <div class="count" id="amy-pick-count">0 / 16</div>
+  </div>
+</div>
+
+<div class="lock-buttons">
+  <button class="lock-btn" id="lock-wally" onclick="lockPlayer('wally')">Lock In Wally's Picks</button>
+  <button class="lock-btn" id="lock-amy" onclick="lockPlayer('amy')">Lock In Amy's Picks</button>
+</div>
+
+<div class="both-locked-banner" id="both-locked-banner">
+  🎬 Both picks locked in! Enjoy the show — see you on the other side. 🍿
+</div>
+
+<div class="column-headers">
+  <div class="col-head"><span class="trophy">🏆</span> Wally</div>
+  <div class="col-spacer"></div>
+  <div class="col-head">Amy <span class="trophy">🏆</span></div>
+</div>
+
+<div class="categories-container" id="categories-container">
+  <!-- Injected by JS -->
+</div>
+
+<script>
+const CATEGORIES = [
+  {
+    id: 'best-picture',
+    label: 'Best Picture',
+    nominees: [
+      'Bugonia','F1','Frankenstein','Hamnet','Marty Supreme',
+      'One Battle After Another','The Secret Agent','Sentimental Value',
+      'Sinners','Train Dreams'
+    ]
+  },
+  {
+    id: 'best-director',
+    label: 'Best Director',
+    nominees: [
+      'Paul Thomas Anderson — One Battle After Another',
+      'Ryan Coogler — Sinners',
+      'Josh Safdie — Marty Supreme',
+      'Joachim Trier — Sentimental Value',
+      'Chloé Zhao — Hamnet'
+    ]
+  },
+  {
+    id: 'best-actor',
+    label: 'Best Actor',
+    nominees: [
+      'Timothée Chalamet — Marty Supreme',
+      'Leonardo DiCaprio — One Battle After Another',
+      'Ethan Hawke — Blue Moon',
+      'Michael B. Jordan — Sinners',
+      'Wagner Moura — The Secret Agent'
+    ]
+  },
+  {
+    id: 'best-actress',
+    label: 'Best Actress',
+    nominees: [
+      'Jessie Buckley — Hamnet',
+      'Rose Byrne — If I Had Legs I\'d Kick You',
+      'Kate Hudson — Song Sung Blue',
+      'Renate Reinsve — Sentimental Value',
+      'Emma Stone — Bugonia'
+    ]
+  },
+  {
+    id: 'best-supp-actor',
+    label: 'Best Supporting Actor',
+    nominees: [
+      'Benicio del Toro — One Battle After Another',
+      'Jacob Elordi — Frankenstein',
+      'Delroy Lindo — Sinners',
+      'Sean Penn — One Battle After Another',
+      'Stellan Skarsgård — Sentimental Value'
+    ]
+  },
+  {
+    id: 'best-supp-actress',
+    label: 'Best Supporting Actress',
+    nominees: [
+      'Elle Fanning — Sentimental Value',
+      'Inga Ibsdotter Lilleaas — Sentimental Value',
+      'Amy Madigan — Weapons',
+      'Wunmi Mosaku — Sinners',
+      'Teyana Taylor — One Battle After Another'
+    ]
+  },
+  {
+    id: 'best-orig-screenplay',
+    label: 'Best Original Screenplay',
+    nominees: [
+      'Blue Moon — Robert Kaplow',
+      'It Was Just an Accident — Jafar Panahi',
+      'Marty Supreme — Bronstein & Safdie',
+      'Sentimental Value — Vogt & Trier',
+      'Sinners — Ryan Coogler'
+    ]
+  },
+  {
+    id: 'best-adapt-screenplay',
+    label: 'Best Adapted Screenplay',
+    nominees: [
+      'Bugonia — Will Tracy',
+      'Frankenstein — Guillermo del Toro',
+      'Hamnet — Zhao & O\'Farrell',
+      'One Battle After Another — Paul Thomas Anderson',
+      'Train Dreams — Bentley & Kwedar'
+    ]
+  },
+  {
+    id: 'best-animated',
+    label: 'Best Animated Feature',
+    nominees: [
+      'Arco',
+      'Elio',
+      'KPop Demon Hunters',
+      'Little Amélie or the Character of Rain',
+      'Zootopia 2'
+    ]
+  },
+  {
+    id: 'best-score',
+    label: 'Best Original Score',
+    nominees: [
+      'Bugonia — Jerskin Fendrix',
+      'Frankenstein — Alexandre Desplat',
+      'Hamnet — Max Richter',
+      'One Battle After Another — Jonny Greenwood',
+      'Sinners — Ludwig Göransson'
+    ]
+  },
+  {
+    id: 'best-song',
+    label: 'Best Original Song',
+    nominees: [
+      '"Dear Me" — Diane Warren: Relentless',
+      '"Golden" — KPop Demon Hunters',
+      '"I Lied to You" — Sinners',
+      '"Sweet Dreams of Joy" — Viva Verdi!',
+      '"Train Dreams" — Train Dreams'
+    ]
+  },
+  {
+    id: 'best-cinematography',
+    label: 'Best Cinematography',
+    nominees: [
+      'Frankenstein — Dan Laustsen',
+      'Marty Supreme — Darius Khondji',
+      'One Battle After Another — Michael Bauman',
+      'Sinners — Autumn Durald Arkapaw',
+      'Train Dreams — Adolpho Veloso'
+    ]
+  },
+  {
+    id: 'best-editing',
+    label: 'Best Film Editing',
+    nominees: [
+      'F1 — Stephen Mirrione',
+      'Marty Supreme — Bronstein & Safdie',
+      'One Battle After Another — Andy Jurgensen',
+      'Sentimental Value — Olivier Bugge Coutté',
+      'Sinners — Michael P. Shawver'
+    ]
+  },
+  {
+    id: 'best-costume',
+    label: 'Best Costume Design',
+    nominees: [
+      'Avatar: Fire and Ash — Deborah L. Scott',
+      'Frankenstein — Kate Hawley',
+      'Hamnet — Malgosia Turzanska',
+      'Marty Supreme — Miyako Bellizzi',
+      'Sinners — Ruth E. Carter'
+    ]
+  },
+  {
+    id: 'best-vfx',
+    label: 'Best Visual Effects',
+    nominees: [
+      'Avatar: Fire and Ash',
+      'F1',
+      'Jurassic World: Rebirth',
+      'The Lost Bus',
+      'Sinners'
+    ]
+  },
+  {
+    id: 'best-documentary',
+    label: 'Best Documentary Feature',
+    nominees: [
+      'The Alabama Solution',
+      'Come See Me in the Good Light',
+      'Cutting Through Rocks',
+      'Mr. Nobody Against Putin',
+      'The Perfect Neighbor'
+    ]
+  }
+];
+
+const TOTAL = CATEGORIES.length;
+const KEY_PICKS = 'oscars2026_picks';
+const KEY_LOCKED = 'oscars2026_locked';
+
+let picks = { wally: {}, amy: {} };
+let locked = { wally: false, amy: false };
+
+function load() {
+  try {
+    const p = localStorage.getItem(KEY_PICKS);
+    if (p) picks = JSON.parse(p);
+    const l = localStorage.getItem(KEY_LOCKED);
+    if (l) locked = JSON.parse(l);
+  } catch(e) {}
+}
+
+function save() {
+  localStorage.setItem(KEY_PICKS, JSON.stringify(picks));
+  localStorage.setItem(KEY_LOCKED, JSON.stringify(locked));
+}
+
+function pick(player, categoryId, nominee) {
+  if (locked[player]) return;
+  picks[player][categoryId] = nominee;
+  save();
+  renderAll();
+}
+
+function lockPlayer(player) {
+  const catIds = CATEGORIES.map(c => c.id);
+  const chosen = Object.keys(picks[player]).filter(k => catIds.includes(k));
+  if (chosen.length < TOTAL) {
+    const missing = TOTAL - chosen.length;
+    if (!confirm(`You still have ${missing} unpicked categor${missing===1?'y':'ies'}. Lock anyway?`)) return;
+  }
+  locked[player] = true;
+  save();
+  renderAll();
+}
+
+function renderAll() {
+  const container = document.getElementById('categories-container');
+  container.innerHTML = '';
+
+  CATEGORIES.forEach(cat => {
+    const div = document.createElement('div');
+    div.className = 'category';
+
+    div.innerHTML = `
+      <div class="category-header"><h2>${cat.label}</h2></div>
+      <div class="picks-row">
+        <div class="player-column wally-col">
+          <div class="player-label ${locked.wally ? 'is-locked' : ''}">Wally</div>
+          ${cat.nominees.map(n => `
+            <button
+              class="nominee-btn ${picks.wally[cat.id] === n ? 'selected' : ''} ${locked.wally ? 'locked' : ''}"
+              onclick="pick('wally','${cat.id}',${JSON.stringify(n)})"
+            >${n}</button>
+          `).join('')}
+        </div>
+        <div class="divider">vs</div>
+        <div class="player-column amy-col">
+          <div class="player-label ${locked.amy ? 'is-locked' : ''}">Amy</div>
+          ${cat.nominees.map(n => `
+            <button
+              class="nominee-btn ${picks.amy[cat.id] === n ? 'selected' : ''} ${locked.amy ? 'locked' : ''}"
+              onclick="pick('amy','${cat.id}',${JSON.stringify(n)})"
+            >${n}</button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+
+  // Update pick counts
+  const wallyCount = Object.keys(picks.wally).filter(k => CATEGORIES.find(c=>c.id===k)).length;
+  const amyCount = Object.keys(picks.amy).filter(k => CATEGORIES.find(c=>c.id===k)).length;
+  document.getElementById('wally-pick-count').textContent = `${wallyCount} / ${TOTAL}`;
+  document.getElementById('amy-pick-count').textContent = `${amyCount} / ${TOTAL}`;
+
+  // Update score box locked state
+  const wallyBox = document.getElementById('wally-score-box');
+  const amyBox = document.getElementById('amy-score-box');
+  wallyBox.classList.toggle('locked', locked.wally);
+  amyBox.classList.toggle('locked', locked.amy);
+
+  // Lock buttons
+  const wallyBtn = document.getElementById('lock-wally');
+  const amyBtn = document.getElementById('lock-amy');
+  wallyBtn.disabled = locked.wally;
+  wallyBtn.textContent = locked.wally ? "Wally's Picks Locked" : "Lock In Wally's Picks";
+  amyBtn.disabled = locked.amy;
+  amyBtn.textContent = locked.amy ? "Amy's Picks Locked" : "Lock In Amy's Picks";
+
+  // Both locked banner
+  const banner = document.getElementById('both-locked-banner');
+  banner.classList.toggle('visible', locked.wally && locked.amy);
+}
+
+load();
+renderAll();
+</script>
+</body>
+</html>
